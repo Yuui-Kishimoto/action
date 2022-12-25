@@ -1,0 +1,349 @@
+<html lang="ja"><head>
+    <title>most hard</title>
+    <meta charset="utf-8">
+    <style>
+        canvas {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+        }
+    </style>
+</head>
+
+<body onload="initw()" class="vsc-initialized">
+
+    <canvas id="canvas" width="300" height="300" tabindex="1" style="display: block;"></canvas>
+    <canvas id="canvas2" width="300" height="300" tabindex="2" style="display: none;"></canvas>
+
+    <script>
+        var bg;
+        var canvas;
+        var context;
+        var maps = [[
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+            [1, 0, 1, 0, 0, 0, 1, 0, 0, 1],
+            [1, 0, 0, 0, 1, 0, 0, 0, 1, 1],
+            [1, 0, 1, 0, 0, 0, 1, 0, 0, 1],
+            [1, 0, 0, 0, 1, 0, 0, 0, 1, 1],
+            [1, 0, 1, 0, 0, 0, 1, 0, 0, 1],
+            [1, 0, 0, 0, 1, 0, 0, 0, 1, 1],
+            [1, 0, 1, 0, 0, 0, 1, 0, 0, 2],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        ], [
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 0, 1, 0, 0, 0, 1, 0, 2, 1],
+            [1, 0, 1, 0, 1, 0, 1, 0, 0, 1],
+            [1, 0, 1, 0, 1, 0, 1, 1, 0, 1],
+            [1, 0, 1, 0, 1, 0, 1, 0, 0, 1],
+            [1, 0, 1, 0, 1, 0, 1, 0, 1, 1],
+            [1, 0, 1, 0, 1, 0, 1, 0, 0, 1],
+            [1, 0, 1, 0, 1, 0, 1, 1, 0, 1],
+            [1, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        ], [
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 0, 1, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 1, 0, 1, 1, 1, 1, 0, 1],
+            [1, 0, 1, 0, 1, 2, 0, 1, 0, 1],
+            [1, 0, 1, 0, 1, 0, 0, 1, 0, 1],
+            [1, 0, 1, 0, 1, 1, 0, 1, 0, 1],
+            [1, 0, 1, 0, 0, 0, 0, 1, 0, 1],
+            [1, 0, 1, 1, 1, 1, 1, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        ]];
+        //自機座標
+        var jx = 40;
+        var jy = 40;
+        var pjx = 0;
+        var pjy = 0;
+        var map = [];
+        
+        //キーフラグ
+        var key_up;
+        var key_down;
+        var key_left;
+        var key_right;
+        var mapno=0;
+        var teki =
+        {
+            //敵座標  
+            ex: [],
+            ey: [],
+            movs: [],
+            //敵の個数
+            num: 5,
+            Teki() {
+                ex = Array(this.num);
+                ey = Array(this.num);
+                movs = Array(this.num);
+
+                for (var i = 0; i < this.num; i++) {
+                    this.ex[i] = i * 48 + 50;
+                    this.ey[i] = 30;
+                    this.movs[i] = 2;
+                }
+            },
+            movie() {
+                //行きすぎたら戻るとか
+                for (var i = 0; i < this.num; i++) {
+                    if (this.ey[i] > 260) this.movs[i] = -2;
+                    if (this.ey[i] < 30) this.movs[i] = 2
+                    this.ey[i] += this.movs[i];
+                }
+            },
+            atari(jx, jy) {
+                for (var i = 0; i < this.num; i++) {
+                    if (Math.abs((this.ex[i] + 5) - jx) < 10 && Math.abs((this.ey[i] + 5) - jy) < 10) {
+                        return 1;
+                    }
+                }
+                return 0;
+            },
+        }
+        function teki1() {
+            this.num = 10;
+            ex = Array(this.num);
+            ey = Array(this.num);
+            movs = Array(this.num);
+
+            for (var i = 0; i < this.num; i++) {
+                this.ex[i] = i * 23 + 50;
+                this.ey[i] = (i % 2 == 0) ? 30 : 270;
+                this.movs[i] = (i % 2 == 0) ? 1 : -1;
+            }
+        }
+        function teki2() {
+            this.num = 10;
+            this.degree = Array(this.num);
+            this.radius = Array(this.num);
+
+            //縦
+            for (var i = 0; i < 5; i++) {
+                this.degree[i] = (i % 2) ? 90 : 270;
+                this.radius[i] = (i < 3) ? 50 : 110;
+            }
+            this.radius[0] = 20;
+            //横
+            for (var i = 5; i < 10; i++) {
+                this.degree[i] = (i % 2) ? 180 : 0;
+                this.radius[i] = (i < 7) ? 50 : 120;
+            }
+        }
+        function movie1() {
+            for (var i = 0; i < this.num; i++) {
+                if (this.ey[i] > 250) this.movs[i] = -1;
+                if (this.ey[i] < 30) this.movs[i] = 1
+                this.ey[i] += this.movs[i];
+            }
+        }
+        function movie2() {
+            for (let i = 0; i < this.num; i++) {
+                var radian = this.degree[i] * Math.PI / 180; //度をラジアンに変換
+                var x = this.radius[i] * Math.cos(radian) + 300 / 2;
+                var y = this.radius[i] * Math.sin(radian) + 300 / 2;
+                //半径中心位置
+                this.ex[i] = parseInt(x);
+                this.ey[i] = parseInt(y);
+                this.degree[i] += 1;
+            }
+        }
+        function initw() {
+            canvas = [];
+            canvas[0] = document.getElementById('canvas');
+            canvas[1] = document.getElementById('canvas2');
+            context = [];
+            context[0] = canvas[0].getContext('2d');
+            context[1] = canvas[1].getContext('2d');
+            document.addEventListener("keydown", keyDownHandler, false);
+            document.addEventListener("keyup", keyUpHandler, false);
+
+            canvas[0].addEventListener("touchstart", touchstart, false);
+            canvas[0].addEventListener("touchend", touchend, false);
+            canvas[0].addEventListener("touchmove", touchmove, false);
+            canvas[1].addEventListener("touchstart", touchstart, false);
+            canvas[1].addEventListener("touchend", touchend, false);
+            canvas[1].addEventListener("touchmove", touchmove, false);
+
+            for (var i = 0; i < 10; i++) {
+                map[i] = Array(10);
+            }
+            bg = 0;
+            map_chenge(mapno);
+            Onanime();
+        }
+ 
+
+        function Onanime() {
+            if (pjx != 0 && pjy != 0) {
+                if (jx <= pjx) key_left = false;
+                if (jx >= pjx) key_right = false;
+                if (jy <= pjy) key_up = false;
+                if (jy >= pjy) key_down = false;
+            }
+
+            var tjx = jx;
+            var tjy = jy;
+
+            teki.movie();
+            var atari = teki.atari(tjx, tjy);
+
+            if (atari == 1) {
+                jx = 40; jy = 40;
+                requestAnimationFrame(Onanime);
+                return;
+            }
+            if (key_up) tjy = jy - 3;
+            if (key_down) tjy = jy + 3;
+            if (key_right) tjx = jx + 3;
+            if (key_left) tjx = jx - 3;
+
+            for (var i = 0; i < map[0].length; i++) {
+                for (var f = 0; f < map[0].length; f++) {
+                    if (map[f][i] == 1) {
+                        if (Math.abs((f * 30 + 15) - tjx) < 20 && Math.abs((i * 30 + 15) - tjy) < 20) {
+                            tjx = jx;
+                            tjy = jy;
+                        }
+                    }
+                    if (map[f][i] == 2) {
+                        if (Math.abs((f * 30 + 15) - tjx) < 20 && Math.abs((i * 30 + 15) - tjy) < 20) {
+                            mapno++;
+                            map_chenge(mapno);
+                        }
+                    }
+                }
+            }
+            jx = tjx;
+            jy = tjy;
+
+            draw();
+            requestAnimationFrame(Onanime);
+        }
+        function draw() {
+            context[bg].fillStyle = 'Black';
+            context[bg].fillRect(0, 0, 300, 300);
+
+            for (let i = 0; i < map[0].length; i++) {
+                for (let f = 0; f < map[0].length; f++) {
+                    if (map[f][i] == 1) {
+                        context[bg].fillStyle = 'White';
+                        context[bg].fillRect(f * 30, i * 30, 28, 28);
+
+                        context[bg].fillStyle = 'Darkgray';
+                        context[bg].fillRect(f * 30 + 2, i * 30 + 2, 26, 26);
+                    }
+                    if (map[f][i] == 2) {
+                        context[bg].fillStyle = 'gold';
+                        context[bg].fillRect(f * 30, i * 30, 30, 30);
+
+                    }
+                }
+            }
+            context[bg].fillStyle = 'green';
+            context[bg].fillRect(jx - 5, jy - 5, 11, 11);
+            for (let i = 0; i < teki.num; i++) {
+                context[bg].fillStyle = 'rgb(255,00,00)';
+                context[bg].fillRect(teki.ex[i], teki.ey[i], 11, 11);
+            }
+            Render();
+        }
+        //***********************************************
+        // Map交換
+        //***********************************************:
+        function map_chenge(map_num) {
+            jx = 40;
+            jy = 40;
+            for (let i = 0; i < map[0].length; i++) {
+                for (let f = 0; f < map[0].length; f++) {
+                    if (!maps[map_num]) location.reload();
+                    map[i][f] = maps[map_num][i][f];
+                }
+            }
+            if (map_num == 0) {
+                teki.Teki();
+            }
+            else if (map_num == 1){ 
+                teki.Teki = teki1;        
+                teki.Teki();         
+                teki.movie = movie1;
+            }else{
+                teki.Teki = teki2;
+                teki.Teki();
+                teki.movie = movie2;
+            }
+        }
+
+        function Render() {
+            canvas[1 - bg].style.display = 'none';
+            canvas[bg].style.display = 'block';
+            bg = 1 - bg;
+        }
+        function keyDownHandler(e) {
+            if (e.key == "ArrowRight") {
+                key_right = true;
+            }
+            else if (e.key == "ArrowLeft") {
+                key_left = true;
+            }
+            else if (e.key == "ArrowUp") {
+                key_up = true;
+            }
+            else if (e.key == "ArrowDown") {
+                key_down = true;
+            }
+            else if (e.key == " ") {
+                mapno++;
+                map_chenge(mapno);
+            }
+        }
+        function keyUpHandler(e) {
+            if (e.key == "ArrowRight") {
+                key_right = false;
+            }
+            else if (e.key == "ArrowLeft") {
+                key_left = false;
+            }
+            else if (e.key == "ArrowUp") {
+                key_up = false;
+            }
+            else if (e.key == "ArrowDown") {
+                key_down = false;
+            }
+        }
+        function touchstart(e) {
+            var touches = e.changedTouches;
+
+            if (jx + 5 > touches[0].pageX) key_left = true;
+            if (jx + 5 < touches[0].pageX) key_right = true;
+            if (jy + 5 > touches[0].pageY) key_up = true;
+            if (jy + 5 < touches[0].pageY) key_down = true;
+            pjx = touches[0].pageX;
+            pjy = touches[0].pageY;
+
+            console.log(touches[0].pageX)
+        }
+        function touchend(e) {
+            key_left = false;
+            key_right = false;
+            key_up = false;
+            key_down = false;
+            pjx = 0;
+            pjy = 0;
+        }
+        function touchmove(e) {
+            var touches = e.changedTouches;
+
+            if (jx + 5 > touches[0].pageX) key_left = true;
+            if (jx + 5 < touches[0].pageX) key_right = true;
+            if (jy + 5 > touches[0].pageY) key_up = true;
+            if (jy + 5 < touches[0].pageY) key_down = true;
+            pjx = touches[0].pageX;
+            pjy = touches[0].pageY;
+            console.log(touches[0].pageX)
+        }
+    </script>
+
+
+</body></html>
